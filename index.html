@@ -1,0 +1,1256 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>rboxAI Studio</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:      #08090f;
+  --s1:      #0f1018;
+  --s2:      #151720;
+  --s3:      #1c1f2e;
+  --s4:      #232738;
+  --border:  #1f2236;
+  --border2: #282d46;
+  --g1: #4f8bff;
+  --g2: #a855f7;
+  --g3: #f43f5e;
+  --g4: #fb923c;
+  --g5: #10b981;
+  --g6: #f59e0b;
+  --g7: #06b6d4;
+  --text:    #dde1f5;
+  --text2:   #a8aece;
+  --muted:   #50556e;
+  --muted2:  #6b708e;
+
+  --sidebar-w: 220px;
+  --sidebar-collapsed: 56px;
+  --header-h: 52px;
+  --transition: 0.26s cubic-bezier(.4,0,.2,1);
+}
+
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+html, body { height:100%; overflow:hidden; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Outfit', sans-serif;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ─── SCROLLBAR ─── */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
+
+/* ─── AMBIENT ─── */
+.ambient {
+  position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden;
+}
+.ambient::before {
+  content: '';
+  position: absolute;
+  width: 800px; height: 800px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(79,139,255,.06) 0%, transparent 65%);
+  top: -300px; left: -200px;
+}
+.ambient::after {
+  content: '';
+  position: absolute;
+  width: 600px; height: 600px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(168,85,247,.05) 0%, transparent 65%);
+  bottom: -200px; right: -100px;
+}
+
+/* ─── HEADER ─── */
+.header {
+  height: var(--header-h);
+  flex-shrink: 0;
+  position: relative; z-index: 200;
+  display: flex; align-items: center;
+  padding: 0 18px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(8,9,15,.97);
+  backdrop-filter: blur(24px);
+  gap: 14px;
+}
+
+.toggle-btn {
+  width: 32px; height: 32px;
+  background: var(--s2); border: 1px solid var(--border2);
+  border-radius: 9px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text2); font-size: .9rem;
+  transition: all var(--transition);
+  flex-shrink: 0;
+}
+.toggle-btn:hover { background: var(--s3); color: var(--text); border-color: var(--g1); }
+
+.logo {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 800; font-size: 1.12rem;
+  letter-spacing: -.03em;
+  display: flex; align-items: center; gap: 8px;
+  white-space: nowrap; overflow: hidden;
+}
+.logo-mark {
+  width: 28px; height: 28px;
+  background: linear-gradient(135deg, var(--g1), var(--g2));
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .85rem; flex-shrink: 0;
+  box-shadow: 0 0 16px rgba(79,139,255,.3);
+}
+.logo-text { background: linear-gradient(135deg, var(--g1), var(--g2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.logo-text span { -webkit-text-fill-color: var(--text); font-weight: 300; }
+
+.header-right {
+  margin-left: auto;
+  display: flex; align-items: center; gap: 10px;
+}
+.status-pill {
+  display: flex; align-items: center; gap: 6px;
+  background: rgba(16,185,129,.08);
+  border: 1px solid rgba(16,185,129,.18);
+  padding: 4px 10px; border-radius: 20px;
+}
+.sdot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--g5); box-shadow: 0 0 8px var(--g5);
+  animation: pulse 2s infinite;
+}
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+.slbl { font-size: .62rem; color: var(--g5); font-weight: 500; }
+
+/* ─── LAYOUT ─── */
+.layout {
+  flex: 1; display: flex; overflow: hidden;
+  position: relative; z-index: 1;
+}
+
+/* ─── SIDEBAR ─── */
+.sidebar {
+  width: var(--sidebar-w);
+  flex-shrink: 0;
+  height: 100%;
+  background: rgba(8,9,15,.96);
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  transition: width var(--transition);
+  overflow: hidden;
+  backdrop-filter: blur(20px);
+}
+.sidebar.collapsed { width: var(--sidebar-collapsed); }
+
+.sidebar-top {
+  padding: 12px 10px 8px;
+  flex-shrink: 0;
+}
+.sidebar-label {
+  font-size: .58rem; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--muted); padding: 0 8px; margin-bottom: 6px;
+  white-space: nowrap; overflow: hidden;
+  transition: opacity var(--transition);
+}
+.sidebar.collapsed .sidebar-label { opacity: 0; }
+
+.nav-item {
+  display: flex; align-items: center; gap: 11px;
+  padding: 9px 10px; border-radius: 10px;
+  cursor: pointer; transition: all .18s;
+  color: var(--muted2); font-size: .82rem; font-weight: 500;
+  white-space: nowrap; overflow: hidden;
+  margin-bottom: 2px; position: relative;
+  border: 1px solid transparent;
+}
+.nav-item .ni-icon {
+  width: 30px; height: 30px;
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1rem; flex-shrink: 0;
+  background: var(--s2);
+  transition: all .18s;
+}
+.nav-item .ni-label { flex: 1; overflow: hidden; white-space: nowrap; transition: opacity var(--transition), width var(--transition); }
+.sidebar.collapsed .ni-label { opacity: 0; width: 0; }
+
+.nav-item:hover { color: var(--text); background: var(--s2); }
+.nav-item:hover .ni-icon { background: var(--s3); }
+
+.nav-item.active { color: var(--text); background: var(--s2); border-color: var(--border2); }
+.nav-item.active .ni-icon {
+  background: linear-gradient(135deg, var(--g1), var(--g2));
+  box-shadow: 0 0 12px rgba(79,139,255,.35);
+}
+
+/* active indicator bar */
+.nav-item.active::before {
+  content: '';
+  position: absolute; left: -10px; top: 50%;
+  transform: translateY(-50%);
+  width: 3px; height: 18px;
+  background: linear-gradient(to bottom, var(--g1), var(--g2));
+  border-radius: 0 3px 3px 0;
+}
+
+/* tooltip for collapsed sidebar */
+.nav-item { cursor: pointer; }
+.sidebar.collapsed .nav-item:hover::after {
+  content: attr(data-label);
+  position: absolute; left: calc(var(--sidebar-collapsed) + 8px); top: 50%;
+  transform: translateY(-50%);
+  background: var(--s3); border: 1px solid var(--border2);
+  color: var(--text); font-size: .75rem;
+  padding: 5px 10px; border-radius: 8px;
+  white-space: nowrap; z-index: 300;
+  pointer-events: none;
+  box-shadow: 0 4px 20px rgba(0,0,0,.4);
+}
+
+.sidebar-divider { height: 1px; background: var(--border); margin: 8px 10px; }
+
+.sidebar-footer {
+  margin-top: auto;
+  padding: 10px;
+  border-top: 1px solid var(--border);
+}
+.model-info {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 10px; border-radius: 10px;
+  background: var(--s2); border: 1px solid var(--border);
+  overflow: hidden;
+}
+.mi-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--g1); flex-shrink: 0; box-shadow: 0 0 6px var(--g1); }
+.mi-text { font-size: .65rem; color: var(--muted2); white-space: nowrap; overflow: hidden; transition: opacity var(--transition); }
+.mi-text strong { color: var(--text2); display: block; font-size: .7rem; }
+.sidebar.collapsed .mi-text { opacity: 0; }
+
+/* ─── CONTENT ─── */
+.content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.panel { display: none; flex: 1; flex-direction: column; overflow: hidden; }
+.panel.active { display: flex; }
+
+/* ─── CHAT ─── */
+.cbody {
+  flex: 1; overflow-y: auto;
+  padding: 20px 24px;
+  display: flex; flex-direction: column; gap: 14px;
+  scroll-behavior: smooth;
+}
+
+.welcome {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 20px; text-align: center; padding: 40px;
+}
+.wico {
+  width: 70px; height: 70px;
+  background: linear-gradient(135deg, var(--g1), var(--g2));
+  border-radius: 22px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 2rem;
+  box-shadow: 0 0 40px rgba(79,139,255,.2), 0 0 80px rgba(168,85,247,.1);
+}
+.wtitle {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.5rem; font-weight: 700;
+  background: linear-gradient(135deg, var(--text), var(--text2));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.wsub { font-size: .78rem; color: var(--muted2); line-height: 1.75; max-width: 360px; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 6px; }
+.chip {
+  background: var(--s2); border: 1px solid var(--border2);
+  color: var(--text2); font-size: .72rem;
+  padding: 7px 14px; border-radius: 22px;
+  cursor: pointer; transition: all .18s;
+}
+.chip:hover { border-color: var(--g1); color: var(--g1); background: rgba(79,139,255,.06); }
+
+.msg { display: flex; gap: 10px; animation: fi .28s ease; }
+@keyframes fi { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+.msg.user { flex-direction: row-reverse; align-self: flex-end; }
+.av {
+  width: 30px; height: 30px; border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .72rem; flex-shrink: 0;
+}
+.av.ai { background: linear-gradient(135deg, var(--g1), var(--g2)); }
+.av.user { background: var(--s3); border: 1px solid var(--border2); color: var(--text2); }
+
+.bbl {
+  padding: 11px 15px; border-radius: 14px;
+  font-size: .82rem; line-height: 1.75;
+  max-width: 640px; word-break: break-word;
+}
+.msg.ai .bbl {
+  background: var(--s1);
+  border: 1px solid var(--border);
+  border-radius: 4px 14px 14px 14px;
+}
+.msg.user .bbl {
+  background: linear-gradient(135deg, rgba(79,139,255,.1), rgba(168,85,247,.1));
+  border: 1px solid rgba(79,139,255,.18);
+  border-radius: 14px 4px 14px 14px;
+  color: #c4d4ff;
+}
+.bbl pre {
+  background: #030408; border: 1px solid var(--border);
+  border-radius: 9px; padding: 12px; margin-top: 10px;
+  overflow-x: auto; font-family: 'JetBrains Mono', monospace; font-size: .74rem;
+}
+.bbl code { background: rgba(79,139,255,.1); padding: 2px 5px; border-radius: 4px; font-family: 'JetBrains Mono', monospace; font-size: .75rem; }
+
+.tdots { display: flex; gap: 10px; animation: fi .25s ease; }
+.dots { display: flex; gap: 5px; align-items: center; padding: 4px 0; }
+.dots span { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); animation: dk 1.2s infinite; }
+.dots span:nth-child(2){animation-delay:.2s} .dots span:nth-child(3){animation-delay:.4s}
+@keyframes dk { 0%,80%,100%{opacity:.2;transform:scale(.8)} 40%{opacity:1;transform:scale(1)} }
+
+/* Chat input */
+.cinput {
+  padding: 14px 20px;
+  border-top: 1px solid var(--border);
+  background: rgba(8,9,15,.98);
+  backdrop-filter: blur(20px);
+  flex-shrink: 0;
+}
+.mrow { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.msel {
+  background: var(--s2); border: 1px solid var(--border);
+  color: var(--text); font-family: 'Outfit', sans-serif; font-size: .7rem;
+  padding: 5px 10px; border-radius: 8px; outline: none; cursor: pointer;
+}
+.mlbl { font-size: .65rem; color: var(--muted); }
+.clrbtn { margin-left: auto; background: none; border: none; color: var(--muted); font-family: 'Outfit', sans-serif; font-size: .65rem; cursor: pointer; transition: color .18s; }
+.clrbtn:hover { color: var(--g3); }
+
+.irow {
+  display: flex; gap: 10px; align-items: flex-end;
+  background: var(--s1); border: 1px solid var(--border);
+  border-radius: 14px; padding: 10px 12px;
+  transition: border-color .2s;
+}
+.irow:focus-within { border-color: var(--g1); box-shadow: 0 0 0 3px rgba(79,139,255,.07); }
+#chatTA {
+  flex: 1; background: none; border: none; outline: none;
+  color: var(--text); font-family: 'Outfit', sans-serif;
+  font-size: .85rem; resize: none; max-height: 110px; line-height: 1.5;
+}
+#chatTA::placeholder { color: var(--muted); }
+.sbtn {
+  background: linear-gradient(135deg, var(--g1), var(--g2));
+  border: none; color: #fff;
+  width: 34px; height: 34px; border-radius: 10px;
+  cursor: pointer; font-size: .9rem; font-weight: 700;
+  transition: all .18s; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.sbtn:hover { transform: scale(1.06); box-shadow: 0 0 20px rgba(79,139,255,.4); }
+.sbtn:disabled { background: var(--border); color: var(--muted); transform: none; box-shadow: none; cursor: not-allowed; }
+
+/* ─── TOOL PANEL ─── */
+.tp {
+  flex: 1; display: flex; flex-direction: column;
+  padding: 20px 24px; gap: 16px; overflow-y: auto;
+}
+
+/* Panel header */
+.p-header {
+  display: flex; align-items: center; gap: 12px;
+  padding-bottom: 14px; border-bottom: 1px solid var(--border);
+}
+.p-icon {
+  width: 38px; height: 38px; border-radius: 11px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.1rem; flex-shrink: 0;
+}
+.p-icon.c1 { background: linear-gradient(135deg, rgba(79,139,255,.2), rgba(168,85,247,.2)); border: 1px solid rgba(79,139,255,.2); }
+.p-icon.c2 { background: linear-gradient(135deg, rgba(16,185,129,.2), rgba(6,182,212,.2)); border: 1px solid rgba(16,185,129,.2); }
+.p-icon.c3 { background: linear-gradient(135deg, rgba(244,63,94,.2), rgba(251,146,60,.2)); border: 1px solid rgba(244,63,94,.2); }
+.p-icon.c4 { background: linear-gradient(135deg, rgba(245,158,11,.2), rgba(251,146,60,.2)); border: 1px solid rgba(245,158,11,.2); }
+.p-title { font-family: 'Outfit', sans-serif; font-size: 1.05rem; font-weight: 700; color: var(--text); }
+.p-sub { font-size: .7rem; color: var(--muted2); margin-top: 2px; }
+.badge { font-size: .58rem; padding: 3px 8px; border-radius: 20px; font-weight: 600; font-family: 'JetBrains Mono', monospace; }
+.b1 { background: rgba(79,139,255,.12); color: var(--g1); border: 1px solid rgba(79,139,255,.22); }
+.b2 { background: rgba(16,185,129,.1); color: var(--g5); border: 1px solid rgba(16,185,129,.2); }
+.b3 { background: rgba(244,63,94,.1); color: var(--g3); border: 1px solid rgba(244,63,94,.2); }
+.b4 { background: rgba(168,85,247,.12); color: var(--g2); border: 1px solid rgba(168,85,247,.22); }
+
+.lbl { font-size: .62rem; color: var(--muted2); letter-spacing: .08em; text-transform: uppercase; margin-bottom: 6px; font-weight: 600; }
+.ta {
+  background: var(--s1); border: 1px solid var(--border);
+  border-radius: 12px; padding: 12px 14px;
+  color: var(--text); font-family: 'Outfit', sans-serif;
+  font-size: .82rem; width: 100%; resize: vertical; outline: none;
+  line-height: 1.65; transition: border-color .2s;
+}
+.ta:focus { border-color: var(--g1); box-shadow: 0 0 0 3px rgba(79,139,255,.07); }
+.ta::placeholder { color: var(--muted); }
+
+.orow { display: flex; gap: 10px; flex-wrap: wrap; }
+.ogrp { display: flex; flex-direction: column; gap: 5px; }
+.osel {
+  background: var(--s2); border: 1px solid var(--border);
+  color: var(--text); font-family: 'Outfit', sans-serif;
+  font-size: .73rem; padding: 7px 10px; border-radius: 9px;
+  outline: none; cursor: pointer; transition: border-color .2s;
+}
+.osel:focus { border-color: var(--g1); }
+
+/* Buttons */
+.abtn {
+  border: none; font-family: 'Outfit', sans-serif;
+  font-weight: 700; font-size: .8rem;
+  padding: 10px 22px; border-radius: 11px;
+  cursor: pointer; transition: all .2s;
+  align-self: flex-start; display: flex; align-items: center; gap: 7px;
+}
+.abtn:hover { opacity: .87; transform: translateY(-1px); }
+.abtn:disabled { opacity: .4; transform: none; cursor: not-allowed; }
+.abtn.c1 { background: linear-gradient(135deg, var(--g1), var(--g2)); color: #fff; }
+.abtn.c1:hover { box-shadow: 0 4px 24px rgba(79,139,255,.35); }
+.abtn.c2 { background: linear-gradient(135deg, var(--g5), var(--g7)); color: #fff; }
+.abtn.c2:hover { box-shadow: 0 4px 24px rgba(16,185,129,.3); }
+.abtn.c3 { background: linear-gradient(135deg, var(--g3), var(--g4)); color: #fff; }
+.abtn.c3:hover { box-shadow: 0 4px 24px rgba(244,63,94,.3); }
+.abtn.c4 { background: linear-gradient(135deg, var(--g2), var(--g1)); color: #fff; }
+.abtn.c4:hover { box-shadow: 0 4px 24px rgba(168,85,247,.3); }
+.abtn.ghost { background: var(--s2); border: 1px solid var(--border2); color: var(--text2); }
+.abtn.ghost:hover { background: var(--s3); border-color: var(--g1); color: var(--text); box-shadow: none; }
+
+/* Result box */
+.rbox {
+  background: var(--s1); border: 1px solid var(--border);
+  border-radius: 12px; padding: 16px;
+  font-size: .82rem; line-height: 1.78; min-height: 80px;
+}
+.rbox.empty {
+  display: flex; align-items: center; justify-content: center;
+  color: var(--muted); font-size: .72rem;
+  border-style: dashed; min-height: 100px; text-align: center;
+}
+.rbox pre {
+  background: #030408; border: 1px solid var(--border);
+  border-radius: 9px; padding: 12px; overflow-x: auto;
+  font-family: 'JetBrains Mono', monospace; font-size: .73rem; margin-top: 8px;
+}
+.rbox code { background: rgba(79,139,255,.09); padding: 1px 5px; border-radius: 4px; font-family: 'JetBrains Mono', monospace; font-size: .75rem; }
+
+.ract { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+.mbtn {
+  background: var(--s2); border: 1px solid var(--border);
+  color: var(--muted2); font-family: 'Outfit', sans-serif;
+  font-size: .65rem; font-weight: 500;
+  padding: 5px 12px; border-radius: 8px;
+  cursor: pointer; transition: all .18s;
+}
+.mbtn:hover { border-color: var(--g1); color: var(--g1); background: rgba(79,139,255,.05); }
+
+.err-b {
+  color: var(--g3); background: rgba(244,63,94,.07);
+  border: 1px solid rgba(244,63,94,.18);
+  border-radius: 9px; padding: 10px 14px; font-size: .78rem;
+}
+
+/* Char count */
+.ccount { font-size: .6rem; color: var(--muted); text-align: right; margin-top: 4px; }
+
+/* Two col */
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media(max-width:680px) { .two-col { grid-template-columns: 1fr; } }
+
+/* Detected lang */
+.det-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: rgba(79,139,255,.08); border: 1px solid rgba(79,139,255,.2);
+  color: var(--g1); font-size: .65rem; padding: 4px 10px;
+  border-radius: 20px; margin-top: 6px; font-weight: 500;
+}
+
+/* Filter chips */
+.fchips { display: flex; flex-wrap: wrap; gap: 8px; }
+.fchip {
+  background: var(--s2); border: 1px solid var(--border);
+  color: var(--muted2); font-size: .7rem; font-weight: 500;
+  padding: 6px 14px; border-radius: 22px;
+  cursor: pointer; transition: all .18s;
+}
+.fchip:hover { border-color: var(--g5); color: var(--g5); }
+.fchip.sel { border-color: var(--g5); color: var(--g5); background: rgba(16,185,129,.08); }
+
+.cfinp-row { display: flex; gap: 8px; align-items: stretch; }
+.cfinp {
+  flex: 1; background: var(--s1); border: 1px solid var(--border);
+  color: var(--text); font-family: 'Outfit', sans-serif;
+  font-size: .8rem; padding: 9px 13px; border-radius: 10px;
+  outline: none; transition: border-color .2s;
+}
+.cfinp:focus { border-color: var(--g5); box-shadow: 0 0 0 3px rgba(16,185,129,.07); }
+.cfinp::placeholder { color: var(--muted); }
+
+/* Separator */
+.sep { height: 1px; background: var(--border); }
+
+/* shimmer */
+.shimmer {
+  background: linear-gradient(90deg, var(--s1) 25%, var(--s2) 50%, var(--s1) 75%);
+  background-size: 200% 100%; animation: shim 1.5s infinite; border-radius: 12px;
+}
+@keyframes shim { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+/* toast */
+.toast {
+  position: fixed; bottom: 20px; left: 50%;
+  transform: translateX(-50%) translateY(8px);
+  background: var(--s3); border: 1px solid var(--border2);
+  color: var(--text); font-family: 'Outfit', sans-serif;
+  font-size: .75rem; font-weight: 500;
+  padding: 9px 18px; border-radius: 11px;
+  z-index: 9999; opacity: 0; transition: all .28s; pointer-events: none;
+  box-shadow: 0 8px 32px rgba(0,0,0,.5);
+  display: flex; align-items: center; gap: 7px;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+<div class="ambient"></div>
+
+<!-- HEADER -->
+<header class="header">
+  <button class="toggle-btn" id="sidebarToggle" onclick="toggleSidebar()" title="Thu gọn/Mở rộng">
+    <span id="toggleIcon">☰</span>
+  </button>
+  <div class="logo">
+    <div class="logo-mark">r</div>
+    <span class="logo-text">rbox<span>AI</span></span>
+  </div>
+  <div class="header-right">
+    <div class="status-pill">
+      <div class="sdot"></div>
+      <span class="slbl">Groq · Online</span>
+    </div>
+  </div>
+</header>
+
+<!-- LAYOUT -->
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-top">
+      <div class="sidebar-label">Menu</div>
+
+      <div class="nav-item active" data-panel="chat" data-label="Chat AI" onclick="goPanel('chat', this)">
+        <div class="ni-icon">💬</div>
+        <span class="ni-label">Chat AI</span>
+      </div>
+      <div class="nav-item" data-panel="trans" data-label="Dịch văn bản" onclick="goPanel('trans', this)">
+        <div class="ni-icon">🌐</div>
+        <span class="ni-label">Dịch văn bản</span>
+      </div>
+      <div class="nav-item" data-panel="filter" data-label="Lọc văn bản" onclick="goPanel('filter', this)">
+        <div class="ni-icon">🔍</div>
+        <span class="ni-label">Lọc văn bản</span>
+      </div>
+      <div class="nav-item" data-panel="summary" data-label="Tóm tắt" onclick="goPanel('summary', this)">
+        <div class="ni-icon">📝</div>
+        <span class="ni-label">Tóm tắt</span>
+      </div>
+      <div class="nav-item" data-panel="code" data-label="Code AI" onclick="goPanel('code', this)">
+        <div class="ni-icon">⚡</div>
+        <span class="ni-label">Code AI</span>
+      </div>
+    </div>
+
+    <div class="sidebar-divider"></div>
+
+    <div style="padding: 8px 10px;">
+      <div class="sidebar-label">Model</div>
+      <select class="osel" id="globalModel" style="width:100%;font-size:.68rem;">
+        <option value="llama-3.3-70b-versatile">Llama 3.3 70B</option>
+        <option value="llama-3.1-8b-instant">Llama 3.1 8B ⚡</option>
+        <option value="mixtral-8x7b-32768">Mixtral 8x7B</option>
+        <option value="gemma2-9b-it">Gemma2 9B</option>
+      </select>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="model-info">
+        <div class="mi-dot"></div>
+        <div class="mi-text">
+          <strong>Groq API</strong>
+          Kết nối trực tiếp
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <!-- ═══ CHAT ═══ -->
+    <div class="panel active" id="chatPanel">
+      <div class="cbody" id="chatBody">
+        <div class="welcome" id="welcomeEl">
+          <div class="wico">⚡</div>
+          <div class="wtitle">Xin chào! Tôi là rboxAI</div>
+          <div class="wsub">Trợ lý AI thông minh, được cung cấp bởi Groq. Hãy hỏi tôi bất kỳ điều gì!</div>
+          <div class="chips">
+            <div class="chip" onclick="useChip(this)">🌍 Giải thích về AI</div>
+            <div class="chip" onclick="useChip(this)">📖 Kể một câu chuyện hay</div>
+            <div class="chip" onclick="useChip(this)">💡 Ý tưởng kinh doanh</div>
+            <div class="chip" onclick="useChip(this)">🐛 Debug code giúp tôi</div>
+            <div class="chip" onclick="useChip(this)">✍️ Viết email chuyên nghiệp</div>
+            <div class="chip" onclick="useChip(this)">🔢 Giải toán cho tôi</div>
+          </div>
+        </div>
+      </div>
+      <div class="cinput">
+        <div class="mrow">
+          <span class="mlbl">Model:</span>
+          <span id="chatModelDisplay" style="font-size:.7rem;color:var(--g1);font-weight:600;">Llama 3.3 70B</span>
+          <button class="clrbtn" onclick="clearChat()">✕ Xóa chat</button>
+        </div>
+        <div class="irow">
+          <textarea id="chatTA" placeholder="Nhắn tin... (Shift+Enter = xuống dòng)" rows="1"
+            oninput="ar(this)" onkeydown="ck(event)"></textarea>
+          <button class="sbtn" id="sendBtn" onclick="sendChat()">➤</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ DỊCH VĂN BẢN ═══ -->
+    <div class="panel" id="transPanel">
+      <div class="tp">
+        <div class="p-header">
+          <div class="p-icon c4">🌐</div>
+          <div>
+            <div class="p-title">Dịch Văn Bản</div>
+            <div class="p-sub">Tự động nhận diện ngôn ngữ nguồn</div>
+          </div>
+          <span class="badge b4" style="margin-left:auto;">Groq LLM</span>
+        </div>
+
+        <div class="two-col">
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <div>
+              <div class="lbl">Văn bản nguồn</div>
+              <textarea class="ta" id="transIn" rows="10"
+                placeholder="Dán văn bản vào đây... Bất kỳ ngôn ngữ nào — tôi sẽ tự nhận diện!"
+                oninput="updateCC('transIn','tc1')"></textarea>
+              <div class="ccount" id="tc1">0 ký tự</div>
+            </div>
+            <div id="detLangWrap" style="display:none">
+              <span class="det-badge">🔍 Nhận diện: <strong id="detLangName">...</strong></span>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <button class="abtn c4" id="transBtn" onclick="doTranslate()">🌐 Dịch ngay</button>
+              <button class="abtn ghost" onclick="swapTrans()">⇄ Hoán đổi</button>
+              <button class="abtn ghost" onclick="clearTrans()">🗑️ Xóa</button>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <div>
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+                <div class="lbl" style="margin-bottom:0;">Ngôn ngữ đích</div>
+                <select class="osel" id="transTarget" style="font-size:.65rem;">
+                  <option value="Tiếng Việt">🇻🇳 Tiếng Việt</option>
+                  <option value="Tiếng Anh">🇬🇧 Tiếng Anh</option>
+                  <option value="Tiếng Trung (Giản thể)">🇨🇳 Tiếng Trung</option>
+                  <option value="Tiếng Nhật">🇯🇵 Tiếng Nhật</option>
+                  <option value="Tiếng Hàn">🇰🇷 Tiếng Hàn</option>
+                  <option value="Tiếng Pháp">🇫🇷 Tiếng Pháp</option>
+                  <option value="Tiếng Tây Ban Nha">🇪🇸 Tiếng TBN</option>
+                  <option value="Tiếng Đức">🇩🇪 Tiếng Đức</option>
+                  <option value="Tiếng Ý">🇮🇹 Tiếng Ý</option>
+                  <option value="Tiếng Nga">🇷🇺 Tiếng Nga</option>
+                  <option value="Tiếng Ả Rập">🇸🇦 Tiếng Ả Rập</option>
+                  <option value="Tiếng Thái">🇹🇭 Tiếng Thái</option>
+                  <option value="Tiếng Indonesia">🇮🇩 Indonesia</option>
+                  <option value="Tiếng Bồ Đào Nha">🇧🇷 Tiếng Bồ</option>
+                </select>
+              </div>
+              <div id="transOut" class="rbox empty" style="min-height:270px;">Bản dịch sẽ hiện ở đây...</div>
+              <div class="ccount" id="tc2" style="margin-top:4px;"></div>
+            </div>
+            <div class="ract" id="transAct" style="display:none">
+              <button class="mbtn" onclick="cp('transOut')">📋 Copy</button>
+              <button class="mbtn" onclick="sendTransToChat()">💬 Chat về bản dịch</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="sep"></div>
+        <div class="orow">
+          <div class="ogrp">
+            <div class="lbl">Phong cách</div>
+            <select class="osel" id="transStyle">
+              <option value="tự nhiên, trôi chảy">Tự nhiên &amp; trôi chảy</option>
+              <option value="sát nghĩa, chính xác">Sát nghĩa, chính xác</option>
+              <option value="trang trọng, học thuật">Trang trọng / Học thuật</option>
+              <option value="thân mật, gần gũi">Thân mật, gần gũi</option>
+              <option value="đơn giản, dễ hiểu">Đơn giản, dễ hiểu</option>
+            </select>
+          </div>
+          <div class="ogrp">
+            <div class="lbl">Ngữ cảnh</div>
+            <select class="osel" id="transContext">
+              <option value="">Thông thường</option>
+              <option value="văn bản kinh doanh">💼 Kinh doanh</option>
+              <option value="văn bản kỹ thuật / IT">💻 Kỹ thuật / IT</option>
+              <option value="văn bản y tế">🏥 Y tế</option>
+              <option value="văn bản pháp lý">⚖️ Pháp lý</option>
+              <option value="tin tức / báo chí">📰 Báo chí</option>
+              <option value="văn học / sáng tác">📚 Văn học</option>
+              <option value="hội thoại thông thường">💬 Hội thoại</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ LỌC VĂN BẢN ═══ -->
+    <div class="panel" id="filterPanel">
+      <div class="tp">
+        <div class="p-header">
+          <div class="p-icon c2">🔍</div>
+          <div>
+            <div class="p-title">Lọc &amp; Xử lý Văn Bản</div>
+            <div class="p-sub">Làm sạch, trích xuất và biến đổi nội dung</div>
+          </div>
+          <span class="badge b2" style="margin-left:auto;">Groq LLM</span>
+        </div>
+
+        <div>
+          <div class="lbl">Văn bản đầu vào</div>
+          <textarea class="ta" id="filterIn" rows="7"
+            placeholder="Dán văn bản cần lọc/xử lý vào đây... Email, bài viết, dữ liệu thô, log, v.v."
+            oninput="updateCC('filterIn','fc1')"></textarea>
+          <div class="ccount" id="fc1">0 ký tự</div>
+        </div>
+
+        <div>
+          <div class="lbl">Chọn kiểu lọc nhanh</div>
+          <div class="fchips" id="fchipWrap">
+            <div class="fchip sel" data-p="loại bỏ các ký tự đặc biệt, emoji, ký hiệu không cần thiết, chỉ giữ nội dung thuần túy" onclick="selF(this)">🧹 Làm sạch ký tự đặc biệt</div>
+            <div class="fchip" data-p="sửa lỗi chính tả, dấu câu và ngữ pháp trong văn bản" onclick="selF(this)">✅ Sửa chính tả &amp; ngữ pháp</div>
+            <div class="fchip" data-p="định dạng lại văn bản cho gọn gàng, khoảng cách và xuống dòng hợp lý" onclick="selF(this)">📐 Chuẩn hóa định dạng</div>
+            <div class="fchip" data-p="trích xuất tất cả email, số điện thoại, URL, ngày tháng và liệt kê rõ ràng" onclick="selF(this)">📧 Trích xuất thông tin liên hệ</div>
+            <div class="fchip" data-p="trích xuất tất cả con số, số liệu, thống kê và liệt kê có chú thích" onclick="selF(this)">🔢 Trích xuất số liệu</div>
+            <div class="fchip" data-p="xóa thông tin cá nhân (tên, SĐT, địa chỉ, email) và thay bằng [ẨN DANH]" onclick="selF(this)">🔒 Ẩn thông tin cá nhân</div>
+            <div class="fchip" data-p="chuyển toàn bộ văn bản thành danh sách gạch đầu dòng rõ ràng, mỗi ý một dòng" onclick="selF(this)">📋 Chuyển thành danh sách</div>
+            <div class="fchip" data-p="loại bỏ dòng trùng lặp, câu lặp ý và làm gọn văn bản" onclick="selF(this)">♻️ Xóa nội dung trùng lặp</div>
+            <div class="fchip" data-p="tách văn bản thành các đoạn/phần logic rõ ràng với tiêu đề phù hợp" onclick="selF(this)">📑 Tách đoạn &amp; thêm tiêu đề</div>
+            <div class="fchip" data-p="phân tích cảm xúc/tông của văn bản: tích cực, tiêu cực hay trung lập — giải thích lý do" onclick="selF(this)">😊 Phân tích cảm xúc</div>
+          </div>
+        </div>
+
+        <div>
+          <div class="lbl">Hoặc nhập yêu cầu tùy chỉnh</div>
+          <div class="cfinp-row">
+            <input type="text" class="cfinp" id="filterCustom"
+              placeholder="Ví dụ: chỉ giữ các câu chứa từ khóa 'doanh thu'...">
+            <button class="abtn c2" id="filterBtn" onclick="doFilter()" style="white-space:nowrap;align-self:stretch;padding:0 20px;border-radius:10px;">🔍 Lọc ngay</button>
+          </div>
+        </div>
+
+        <div>
+          <div class="lbl">Kết quả</div>
+          <div id="filterOut" class="rbox empty">Kết quả lọc sẽ hiển thị ở đây...</div>
+          <div class="ract" id="filterAct" style="display:none">
+            <button class="mbtn" onclick="cp('filterOut')">📋 Copy</button>
+            <button class="mbtn" onclick="filterToChat()">💬 Xử lý thêm trong chat</button>
+            <button class="mbtn" onclick="useAsInput()">🔄 Dùng làm đầu vào mới</button>
+            <button class="mbtn" onclick="clearFilter()">🗑️ Xóa</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ TÓM TẮT ═══ -->
+    <div class="panel" id="summaryPanel">
+      <div class="tp">
+        <div class="p-header">
+          <div class="p-icon c1">📝</div>
+          <div>
+            <div class="p-title">Tóm tắt Văn bản</div>
+            <div class="p-sub">Rút gọn nội dung nhanh chóng và chính xác</div>
+          </div>
+          <span class="badge b1" style="margin-left:auto;">Groq LLM</span>
+        </div>
+
+        <div>
+          <div class="lbl">Văn bản cần tóm tắt</div>
+          <textarea class="ta" id="sumIn" rows="9"
+            placeholder="Dán văn bản vào đây... bài báo, tài liệu, email, sách, v.v."
+            oninput="updateCC('sumIn','sc1')"></textarea>
+          <div class="ccount" id="sc1">0 ký tự</div>
+        </div>
+        <div class="orow">
+          <div class="ogrp">
+            <div class="lbl">Độ dài</div>
+            <select class="osel" id="sumLen">
+              <option value="2-3 câu ngắn gọn">Rất ngắn (2-3 câu)</option>
+              <option value="1 đoạn văn" selected>Ngắn (1 đoạn)</option>
+              <option value="3-4 đoạn chi tiết">Trung bình (3-4 đoạn)</option>
+              <option value="danh sách các điểm chính có bullet points">Chi tiết dạng bullet</option>
+            </select>
+          </div>
+          <div class="ogrp">
+            <div class="lbl">Ngôn ngữ đầu ra</div>
+            <select class="osel" id="sumLang">
+              <option>Tiếng Việt</option>
+              <option>Tiếng Anh</option>
+              <option value="giữ nguyên ngôn ngữ gốc">Giữ nguyên</option>
+            </select>
+          </div>
+          <div class="ogrp">
+            <div class="lbl">Phong cách</div>
+            <select class="osel" id="sumStyle">
+              <option>Trung lập, rõ ràng</option>
+              <option>Đơn giản dễ hiểu</option>
+              <option>Chuyên nghiệp, học thuật</option>
+              <option>Các điểm chính cần nhớ</option>
+            </select>
+          </div>
+        </div>
+        <button class="abtn c1" id="sumBtn" onclick="doSum()">📝 Tóm tắt ngay</button>
+        <div>
+          <div class="lbl">Kết quả</div>
+          <div id="sumRes" class="rbox empty">Kết quả tóm tắt sẽ hiển thị ở đây...</div>
+          <div class="ract" id="sumAct" style="display:none">
+            <button class="mbtn" onclick="cp('sumRes')">📋 Copy</button>
+            <button class="mbtn" onclick="sumToChat()">💬 Chat về nội dung này</button>
+            <button class="mbtn" onclick="clearSum()">🗑️ Xóa</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ CODE AI ═══ -->
+    <div class="panel" id="codePanel">
+      <div class="tp">
+        <div class="p-header">
+          <div class="p-icon c3">⚡</div>
+          <div>
+            <div class="p-title">Code AI</div>
+            <div class="p-sub">Viết, debug, giải thích và tối ưu code</div>
+          </div>
+          <span class="badge b3" style="margin-left:auto;">Groq LLM</span>
+        </div>
+
+        <div class="orow">
+          <div class="ogrp">
+            <div class="lbl">Tác vụ</div>
+            <select class="osel" id="codeTask">
+              <option value="generate">✏️ Viết code mới</option>
+              <option value="debug">🐛 Debug / Sửa lỗi</option>
+              <option value="explain">📖 Giải thích code</option>
+              <option value="optimize">⚡ Tối ưu hoá</option>
+              <option value="convert">🔄 Chuyển ngôn ngữ</option>
+              <option value="test">🧪 Viết Unit Test</option>
+              <option value="document">📚 Thêm comments/docs</option>
+              <option value="review">🔎 Code Review</option>
+            </select>
+          </div>
+          <div class="ogrp">
+            <div class="lbl">Ngôn ngữ</div>
+            <select class="osel" id="codeLang">
+              <option>Python</option><option>JavaScript</option><option>TypeScript</option>
+              <option>HTML/CSS</option><option>Java</option><option>C++</option>
+              <option>Go</option><option>Rust</option><option>PHP</option>
+              <option>SQL</option><option>Bash/Shell</option><option>Tự phát hiện</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <div class="lbl">Mô tả yêu cầu hoặc dán code</div>
+          <textarea class="ta" id="codeIn" rows="9"
+            placeholder="Ví dụ: Viết hàm Python đọc file CSV, lọc rows có null, xuất file mới kèm log...&#10;&#10;Hoặc dán code cần debug/giải thích."></textarea>
+        </div>
+        <button class="abtn c3" id="codeBtn" onclick="doCode()">⚡ Xử lý ngay</button>
+        <div>
+          <div class="lbl">Kết quả</div>
+          <div id="codeRes" class="rbox empty">Code sẽ xuất hiện ở đây...</div>
+          <div class="ract" id="codeAct" style="display:none">
+            <button class="mbtn" onclick="cp('codeRes')">📋 Copy code</button>
+            <button class="mbtn" onclick="codeToChat()">💬 Hỏi thêm về code này</button>
+            <button class="mbtn" onclick="clearCode()">🗑️ Xóa</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /layout -->
+
+<div class="toast" id="toastEl"></div>
+
+<script>
+// ─── CONFIG ───────────────────────────────────────────────
+const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
+let chatHistory = [];
+let selFilterPrompt = 'loại bỏ các ký tự đặc biệt, emoji, ký hiệu không cần thiết, chỉ giữ nội dung thuần túy';
+let sidebarOpen = true;
+
+// ─── SIDEBAR TOGGLE ──────────────────────────────────────
+function toggleSidebar() {
+  const sb = document.getElementById('sidebar');
+  sidebarOpen = !sidebarOpen;
+  if (sidebarOpen) {
+    sb.classList.remove('collapsed');
+    document.getElementById('toggleIcon').textContent = '☰';
+  } else {
+    sb.classList.add('collapsed');
+    document.getElementById('toggleIcon').textContent = '▶';
+  }
+  localStorage.setItem('sb_open', sidebarOpen ? '1' : '0');
+}
+// Restore state
+if (localStorage.getItem('sb_open') === '0') {
+  sidebarOpen = false;
+  document.getElementById('sidebar').classList.add('collapsed');
+  document.getElementById('toggleIcon').textContent = '▶';
+}
+
+// ─── PANEL SWITCH ────────────────────────────────────────
+function goPanel(name, el) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById(name + 'Panel').classList.add('active');
+  el.classList.add('active');
+}
+
+// ─── MODEL SYNC ──────────────────────────────────────────
+document.getElementById('globalModel').addEventListener('change', function() {
+  document.getElementById('chatModelDisplay').textContent = this.options[this.selectedIndex].text;
+});
+
+// ─── TOAST ───────────────────────────────────────────────
+function toast(m, d = 2500) {
+  const t = document.getElementById('toastEl');
+  t.innerHTML = m; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), d);
+}
+
+// ─── GROQ API ────────────────────────────────────────────
+async function groq(messages, max = 2048) {
+  const model = document.getElementById('globalModel').value;
+
+  const r = await fetch("/api/chat", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model,
+      messages,
+      max
+    })
+  });
+
+  const d = await r.json();
+
+  if (!r.ok) throw new Error(d.error || "Server error");
+
+  return d.reply;
+}
+
+// ─── UTILS ───────────────────────────────────────────────
+function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function md(t) {
+  return t
+    .replace(/```(\w*)\n?([\s\S]*?)```/g, (_, l, c) => `<pre><code>${esc(c.trim())}</code></pre>`)
+    .replace(/`([^`\n]+)`/g, '<code>$1</code>')
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+    .replace(/^#{1,3} (.+)$/gm, '<strong style="font-size:1em;display:block;margin-top:6px;">$1</strong>')
+    .replace(/^[•\-\*] (.+)$/gm, '• $1')
+    .replace(/\n/g, '<br>');
+}
+function ar(el) { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 110) + 'px'; }
+function cp(id) { navigator.clipboard.writeText(document.getElementById(id).innerText).then(() => toast('✅ Đã copy!')); }
+function updateCC(tid, cid) {
+  const n = document.getElementById(tid).value.length;
+  document.getElementById(cid).textContent = n.toLocaleString('vi') + ' ký tự';
+}
+
+// ─── CHAT ────────────────────────────────────────────────
+function ck(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat(); } }
+function useChip(el) { document.getElementById('chatTA').value = el.textContent.replace(/^[^\s]+\s/, ''); sendChat(); }
+
+function addMsg(role, html) {
+  const w = document.getElementById('welcomeEl'); if (w) w.remove();
+  const body = document.getElementById('chatBody');
+  const d = document.createElement('div'); d.className = 'msg ' + role;
+  d.innerHTML = `<div class="av ${role}">${role === 'ai' ? '⚡' : '👤'}</div><div class="bbl">${html}</div>`;
+  body.appendChild(d); body.scrollTop = body.scrollHeight;
+}
+function addTyping() {
+  const w = document.getElementById('welcomeEl'); if (w) w.remove();
+  const body = document.getElementById('chatBody');
+  const d = document.createElement('div'); d.className = 'tdots'; d.id = 'typdot';
+  d.innerHTML = `<div class="av ai">⚡</div><div class="bbl"><div class="dots"><span></span><span></span><span></span></div></div>`;
+  body.appendChild(d); body.scrollTop = body.scrollHeight;
+}
+function remTyping() { const t = document.getElementById('typdot'); if (t) t.remove(); }
+
+async function sendChat() {
+  const ta = document.getElementById('chatTA');
+  const txt = ta.value.trim(); if (!txt) return;
+  ta.value = ''; ta.style.height = 'auto';
+  document.getElementById('sendBtn').disabled = true;
+  addMsg('user', md(txt));
+  chatHistory.push({ role: 'user', content: txt });
+  addTyping();
+  try {
+    const rep = await groq(chatHistory, 2048);
+    remTyping(); addMsg('ai', md(rep));
+    chatHistory.push({ role: 'assistant', content: rep });
+  } catch (e) {
+    remTyping(); addMsg('ai', `<div class="err-b">⚠️ ${esc(e.message)}</div>`);
+  }
+  document.getElementById('sendBtn').disabled = false;
+  ta.focus();
+}
+
+function clearChat() {
+  chatHistory = [];
+  document.getElementById('chatBody').innerHTML = `
+    <div class="welcome" id="welcomeEl">
+      <div class="wico">⚡</div>
+      <div class="wtitle">Chat mới bắt đầu!</div>
+      <div class="wsub">Hỏi bất kỳ điều gì, tôi sẵn sàng.</div>
+      <div class="chips">
+        <div class="chip" onclick="useChip(this)">🌍 Giải thích về AI</div>
+        <div class="chip" onclick="useChip(this)">📖 Kể câu chuyện hay</div>
+        <div class="chip" onclick="useChip(this)">💡 Ý tưởng kinh doanh</div>
+        <div class="chip" onclick="useChip(this)">🐛 Debug code</div>
+      </div>
+    </div>`;
+  toast('✅ Đã xóa chat');
+}
+
+// ─── DỊCH VĂN BẢN ────────────────────────────────────────
+async function doTranslate() {
+  const txt = document.getElementById('transIn').value.trim();
+  if (!txt) { toast('⚠️ Nhập văn bản cần dịch'); return; }
+  const target = document.getElementById('transTarget').value;
+  const style = document.getElementById('transStyle').value;
+  const ctx = document.getElementById('transContext').value;
+  const btn = document.getElementById('transBtn');
+  btn.disabled = true; btn.textContent = '⏳ Đang dịch...';
+  const out = document.getElementById('transOut');
+  out.className = 'rbox shimmer'; out.style.minHeight = '270px'; out.innerHTML = '';
+  document.getElementById('detLangWrap').style.display = 'none';
+  const ctxStr = ctx ? `\n- Ngữ cảnh: ${ctx}` : '';
+  const prompt = `Bạn là chuyên gia dịch thuật. Làm 2 việc:\n1. Nhận diện ngôn ngữ nguồn (dòng đầu tiên: LANG: [tên ngôn ngữ])\n2. Dịch sang ${target}, phong cách: ${style}${ctxStr}\n\nQuy tắc: dòng đầu PHẢI là LANG: [...], sau đó là bản dịch hoàn chỉnh, không thêm chú thích thừa. Giữ nguyên định dạng.\n\nVăn bản:\n"""\n${txt}\n"""`;
+  try {
+    const rep = await groq([{ role: 'user', content: prompt }], 3000);
+    const lines = rep.split('\n');
+    let translated = rep;
+    if (lines[0].startsWith('LANG:')) {
+      document.getElementById('detLangName').textContent = lines[0].replace('LANG:', '').trim();
+      document.getElementById('detLangWrap').style.display = 'block';
+      translated = lines.slice(1).join('\n').trim();
+    }
+    out.className = 'rbox'; out.style.minHeight = '';
+    out.innerHTML = md(translated);
+    document.getElementById('tc2').textContent = translated.length.toLocaleString('vi') + ' ký tự';
+    document.getElementById('transAct').style.display = 'flex';
+    toast('✅ Dịch xong!');
+  } catch (e) {
+    out.className = 'rbox'; out.style.minHeight = '';
+    out.innerHTML = `<div class="err-b">⚠️ ${esc(e.message)}</div>`;
+  }
+  btn.disabled = false; btn.textContent = '🌐 Dịch ngay';
+}
+
+function swapTrans() {
+  const outEl = document.getElementById('transOut');
+  if (outEl.classList.contains('empty')) { toast('⚠️ Chưa có bản dịch'); return; }
+  document.getElementById('transIn').value = outEl.innerText;
+  updateCC('transIn', 'tc1');
+  outEl.className = 'rbox empty'; outEl.textContent = 'Bản dịch sẽ hiện ở đây...';
+  document.getElementById('tc2').textContent = '';
+  document.getElementById('detLangWrap').style.display = 'none';
+  document.getElementById('transAct').style.display = 'none';
+  toast('✅ Đã hoán đổi');
+}
+
+function clearTrans() {
+  document.getElementById('transIn').value = '';
+  document.getElementById('tc1').textContent = '0 ký tự';
+  document.getElementById('transOut').className = 'rbox empty';
+  document.getElementById('transOut').textContent = 'Bản dịch sẽ hiện ở đây...';
+  document.getElementById('tc2').textContent = '';
+  document.getElementById('detLangWrap').style.display = 'none';
+  document.getElementById('transAct').style.display = 'none';
+}
+
+function sendTransToChat() {
+  const src = document.getElementById('transIn').value.trim();
+  const translated = document.getElementById('transOut').innerText;
+  const target = document.getElementById('transTarget').value;
+  chatHistory = [
+    { role: 'user', content: `Bản gốc:\n"${src}"\n\nBản dịch sang ${target}:\n"${translated}"\n\nGiúp tôi cải thiện hoặc giải thích bản dịch này.` },
+    { role: 'assistant', content: 'Tôi đã đọc bản gốc và bản dịch. Bạn muốn tôi phân tích hoặc cải thiện phần nào?' }
+  ];
+  goPanel('chat', document.querySelector('.nav-item[data-panel="chat"]'));
+  toast('✅ Đã chuyển sang chat');
+}
+
+// ─── LỌC VĂN BẢN ─────────────────────────────────────────
+function selF(el) {
+  document.querySelectorAll('.fchip').forEach(c => c.classList.remove('sel'));
+  el.classList.add('sel');
+  selFilterPrompt = el.dataset.p;
+  document.getElementById('filterCustom').value = '';
+}
+
+async function doFilter() {
+  const txt = document.getElementById('filterIn').value.trim();
+  if (!txt) { toast('⚠️ Nhập văn bản cần lọc'); return; }
+  const custom = document.getElementById('filterCustom').value.trim();
+  const inst = custom || selFilterPrompt;
+  const btn = document.getElementById('filterBtn');
+  btn.disabled = true; btn.textContent = '⏳ Đang lọc...';
+  const out = document.getElementById('filterOut');
+  out.className = 'rbox shimmer'; out.innerHTML = '';
+  const prompt = `Thực hiện tác vụ xử lý văn bản:\n\nYêu cầu: ${inst}\n\nVăn bản:\n"""\n${txt}\n"""\n\nChỉ trả về kết quả đã xử lý, không thêm lời giải thích.`;
+  try {
+    const rep = await groq([{ role: 'user', content: prompt }], 2048);
+    out.className = 'rbox'; out.innerHTML = md(rep);
+    document.getElementById('filterAct').style.display = 'flex';
+    toast('✅ Lọc xong!');
+  } catch (e) {
+    out.className = 'rbox'; out.innerHTML = `<div class="err-b">⚠️ ${esc(e.message)}</div>`;
+  }
+  btn.disabled = false; btn.textContent = '🔍 Lọc ngay';
+}
+
+function filterToChat() {
+  const r = document.getElementById('filterOut').innerText;
+  chatHistory = [
+    { role: 'user', content: 'Văn bản sau xử lý:\n\n' + r },
+    { role: 'assistant', content: 'Tôi đã xem. Bạn muốn xử lý thêm gì không?' }
+  ];
+  goPanel('chat', document.querySelector('.nav-item[data-panel="chat"]'));
+  toast('✅ Đã chuyển sang chat');
+}
+
+function useAsInput() {
+  const r = document.getElementById('filterOut').innerText;
+  document.getElementById('filterIn').value = r;
+  updateCC('filterIn', 'fc1');
+  document.getElementById('filterOut').className = 'rbox empty';
+  document.getElementById('filterOut').textContent = 'Kết quả lọc sẽ hiển thị ở đây...';
+  document.getElementById('filterAct').style.display = 'none';
+  toast('✅ Đã dùng kết quả làm đầu vào mới');
+}
+
+function clearFilter() {
+  document.getElementById('filterOut').className = 'rbox empty';
+  document.getElementById('filterOut').textContent = 'Kết quả lọc sẽ hiển thị ở đây...';
+  document.getElementById('filterAct').style.display = 'none';
+}
+
+// ─── TÓM TẮT ──────────────────────────────────────────────
+async function doSum() {
+  const txt = document.getElementById('sumIn').value.trim();
+  if (!txt) { toast('⚠️ Nhập văn bản trước'); return; }
+  const len = document.getElementById('sumLen').value;
+  const lang = document.getElementById('sumLang').value;
+  const style = document.getElementById('sumStyle').value;
+  const prompt = `Tóm tắt văn bản sau:\n- Độ dài: ${len}\n- Ngôn ngữ: ${lang}\n- Phong cách: ${style}\n\nVăn bản:\n"""\n${txt}\n"""\n\nChỉ trả lời phần tóm tắt, không thêm lời dẫn.`;
+  const btn = document.getElementById('sumBtn');
+  btn.disabled = true; btn.textContent = '⏳ Đang tóm tắt...';
+  const res = document.getElementById('sumRes');
+  res.className = 'rbox shimmer'; res.innerHTML = '';
+  try {
+    const rep = await groq([{ role: 'user', content: prompt }], 1024);
+    res.className = 'rbox'; res.innerHTML = md(rep);
+    document.getElementById('sumAct').style.display = 'flex';
+    toast('✅ Tóm tắt xong!');
+  } catch (e) {
+    res.className = 'rbox'; res.innerHTML = `<div class="err-b">⚠️ ${esc(e.message)}</div>`;
+  }
+  btn.disabled = false; btn.textContent = '📝 Tóm tắt ngay';
+}
+
+function sumToChat() {
+  const s = document.getElementById('sumRes').innerText;
+  chatHistory = [
+    { role: 'user', content: 'Nội dung tóm tắt:\n\n' + s },
+    { role: 'assistant', content: 'Đã đọc xong! Bạn muốn hỏi gì về nội dung này?' }
+  ];
+  goPanel('chat', document.querySelector('.nav-item[data-panel="chat"]'));
+  toast('✅ Đã chuyển sang chat');
+}
+
+function clearSum() {
+  document.getElementById('sumRes').className = 'rbox empty';
+  document.getElementById('sumRes').textContent = 'Kết quả tóm tắt sẽ hiển thị ở đây...';
+  document.getElementById('sumAct').style.display = 'none';
+}
+
+// ─── CODE AI ──────────────────────────────────────────────
+async function doCode() {
+  const inp = document.getElementById('codeIn').value.trim();
+  if (!inp) { toast('⚠️ Nhập yêu cầu hoặc code'); return; }
+  const task = document.getElementById('codeTask').value;
+  const lang = document.getElementById('codeLang').value;
+  const map = {
+    generate: `Viết code ${lang} theo yêu cầu sau. Code đầy đủ, có comment:\n`,
+    debug: `Debug và sửa lỗi code ${lang}. Giải thích lỗi và đưa code đã sửa:\n`,
+    explain: `Giải thích chi tiết bằng tiếng Việt từng phần code ${lang}:\n`,
+    optimize: `Tối ưu code ${lang} về hiệu suất. Giải thích thay đổi:\n`,
+    convert: `Chuyển code sang ${lang}, giữ nguyên logic, dùng best practices:\n`,
+    test: `Viết unit tests đầy đủ cho code ${lang}, bao gồm edge cases:\n`,
+    document: `Thêm comments và docstring chuẩn cho code ${lang}:\n`,
+    review: `Code review code ${lang}. Điểm tốt, cần cải thiện, security issues:\n`,
+  };
+  const prompt = map[task] + '\n```\n' + inp + '\n```';
+  const btn = document.getElementById('codeBtn');
+  btn.disabled = true; btn.textContent = '⏳ Đang xử lý...';
+  const res = document.getElementById('codeRes');
+  res.className = 'rbox shimmer'; res.innerHTML = '';
+  try {
+    const rep = await groq([{ role: 'user', content: prompt }], 2048);
+    res.className = 'rbox'; res.innerHTML = md(rep);
+    document.getElementById('codeAct').style.display = 'flex';
+    toast('✅ Xử lý code xong!');
+  } catch (e) {
+    res.className = 'rbox'; res.innerHTML = `<div class="err-b">⚠️ ${esc(e.message)}</div>`;
+  }
+  btn.disabled = false; btn.textContent = '⚡ Xử lý ngay';
+}
+
+function codeToChat() {
+  const c = document.getElementById('codeRes').innerText;
+  chatHistory = [
+    { role: 'user', content: 'Đây là code:\n\n' + c },
+    { role: 'assistant', content: 'Đã xem! Bạn muốn chỉnh sửa hay hỏi thêm?' }
+  ];
+  goPanel('chat', document.querySelector('.nav-item[data-panel="chat"]'));
+  toast('✅ Đã chuyển sang chat');
+}
+
+function clearCode() {
+  document.getElementById('codeRes').className = 'rbox empty';
+  document.getElementById('codeRes').textContent = 'Code sẽ xuất hiện ở đây...';
+  document.getElementById('codeAct').style.display = 'none';
+}
+
+// ─── INIT ──────────────────────────────────────────────────
+document.getElementById('chatTA').focus();
+</script>
+</body>
+</html>
